@@ -1,16 +1,20 @@
 package com.FHSUMobile.csa;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-public class DiningActivity extends Activity implements AdapterView.OnItemClickListener {
+public class DiningActivity extends Activity implements AdapterView.OnItemClickListener  {
 
 	ListView onCampusMenu, offCampusMenu;// declare the listview item
+	//AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +75,7 @@ public class DiningActivity extends Activity implements AdapterView.OnItemClickL
 				break;
 			}
 			break;
-		case R.id.offCampusListView: 
+			/*case R.id.offCampusListView: 
 			switch(position)
 			{
 			case 0:intent2.putExtra("name", "Chinese Food Express");
@@ -133,6 +137,31 @@ public class DiningActivity extends Activity implements AdapterView.OnItemClickL
   				break;
 			default:;
 				break;
+			}*/
+			
+		case R.id.offCampusListView: 
+			switch(position)
+			{
+			case 0:Dialog("Chinese Food Express", "1312 Main St.", "(785) 628-9999");
+				break;
+			case 1:Dialog("Gellas Diner & LB Brewing Co.", "117 E. 11th St.", "(785) 621-2739");
+				break;
+			case 2:Dialog("Gutchs Bar & Grill", "111 W. 7th St.", "(785) 623-4088");
+				break;
+			case 3:Dialog("Neighbars Bar & Grill", "507 W 7th St", "(785) 625-1774");
+				break;
+			case 4:Dialog("Taco Shop", "333 W. 8th St", "(785) 625-7114");
+				break;
+			case 5:Dialog("China Garden", "2503 Vine Street", "(785) 628-2280");
+				break;
+			case 6:Dialog("Lucky Buffet and Grocery", "2405 Vine Street", "(785) 621-2727");
+   	   			break;
+			case 7:Dialog("Chinese Grocery Store", "1501 Main Street", "(785) 432-1089");
+  					
+  					
+  				break;
+			default:;
+				break;
 			}
 			
 		default:;
@@ -141,6 +170,36 @@ public class DiningActivity extends Activity implements AdapterView.OnItemClickL
 		
 		
 	}
+	
+	public void Dialog(String name, final String address, final String phone)
+	{
+		
+		
+		
+		AlertDialog.Builder dialogBox = new AlertDialog.Builder(this);
+		dialogBox.setMessage(name+"\n"+address+"\n Hays KS, 67601");
+		
+		dialogBox.setPositiveButton(phone, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+            	Intent callIntent = new Intent(Intent.ACTION_DIAL);
+        	    callIntent.setData(Uri.parse("tel:"+phone));
+        	    startActivity(callIntent);
+            }
+		});
+		
+		dialogBox.setNegativeButton("Directions", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+        		
+        		Intent directionsIntent = new Intent(Intent.ACTION_VIEW);
+        		directionsIntent.setData(Uri.parse("geo:0,0?q="+address));
+        		
+        		startActivity(directionsIntent);
+            }
+        });
+		dialogBox.show();
+		
+	}
+	
 	
 
 }
