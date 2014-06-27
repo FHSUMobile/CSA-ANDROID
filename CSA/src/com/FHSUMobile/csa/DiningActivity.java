@@ -55,7 +55,7 @@ public class DiningActivity extends Activity implements AdapterView.OnItemClickL
 		 */
 		
 		Intent intent = new Intent(this, DisplayTxtActivity.class );//create an intent to launch activity
-		Intent intent2 = new Intent(this, RestaurantInfoActivity.class );//create an intent to launch activity
+		//Intent intent2 = new Intent(this, RestaurantInfoActivity.class );//create an intent to launch activity
 		
 		
 		switch(list.getId())
