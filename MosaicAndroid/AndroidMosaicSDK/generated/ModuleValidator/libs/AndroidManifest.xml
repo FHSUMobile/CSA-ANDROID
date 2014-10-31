@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.FHSUMobile.csa"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    
+    
+    
+    <uses-permission android:name="android.permission.INTERNET"/>
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+	<uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES"/>
+	<!-- The following two permissions are not required to use
+     Google Maps Android API v2, but are recommended. -->
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true"/>
+
+
+    <uses-sdk
+        android:minSdkVersion="9"
+        android:targetSdkVersion="19" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/csa_ic_launcher"
+        android:label="@string/csa_app_name"
+        android:theme="@style/csa_AppTheme" >
+        
+       
+
+
+        <activity
+            android:name="com.FHSUMobile.csa.csa_main_menu"
+            android:label="@string/csa_app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_DiningActivity"
+            android:label="@string/csa_title_activity_dining" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_CommunicationActivity"
+            android:label="@string/csa_title_activity_communication" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_TransportationActivity"
+            android:label="@string/csa_title_activity_transportation" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_FindingAJobActivity"
+            android:label="@string/csa_title_activity_finding_ajob" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_ProtectingYourselfActivity"
+            android:label="@string/csa_title_activity_protecting_yourself" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_BankingActivity"
+            android:label="@string/csa_title_activity_banking" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_VisaInformationActivity"
+            android:label="@string/csa_title_activity_visa_information" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_ChinesefoodExpress"
+            android:label="@string/csa_title_activity_chinesefood_express" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_Gellas"
+            android:label="@string/csa_title_activity_gellas" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_Gutchs"
+            android:label="@string/csa_title_activity_gutchs" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_Neighbars"
+            android:label="@string/csa_title_activity_neighbars" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_TacoShop"
+            android:label="@string/csa_title_activity_taco_shop" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_ChinaGarden"
+            android:label="@string/csa_title_activity_china_garden" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_DisplayTxtActivity"
+            android:label="@string/csa_title_activity_display_txt" >
+        </activity>
+        <activity
+            android:name="com.FHSUMobile.csa.csa_RestaurantInfoActivity"
+            android:label="@string/csa_title_activity_restaurant_info" >
+        </activity>
+    </application>
+
+</manifest>

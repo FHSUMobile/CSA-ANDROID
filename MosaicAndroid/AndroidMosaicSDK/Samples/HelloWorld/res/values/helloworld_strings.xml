@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="helloworld_hellomosaic">Hello Mosaic!</string>
+	<string name="helloworld_app_label">The Hello World Module</string>
+	<string name="helloworld_mainactivity_title">The Hello World Title</string>
+    
+</resources>

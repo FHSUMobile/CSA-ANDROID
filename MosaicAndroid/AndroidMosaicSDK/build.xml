@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- 
+Copyright 2013 Blackboard Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+--> 
+
+<project default="main">
+    
+    <!-- Register some property values -->
+    <!-- module.validator.dir: source directory of the ModuleValidator project -->
+    <property name="module.validator.dir" value="ModuleValidator"/>
+    <!-- modules.dir: Projects in the /modules directory will be compiled and merged into the ModuleValidator project -->
+    <property name="modules.dir" value="modules"/>
+    <!-- generated.dir: location of all the copied over modules and the created ModuleValidator project -->
+    <property name="generated.dir" location="generated"/>
+    
+    <!-- Adding external tools to the path -->
+    <path id="external.tools.classpath">
+	    <fileset dir="./libraries">
+	        <include name="*.jar"/>
+	    </fileset>
+	</path>
+	
+    <!-- Adding Groovy (an external tool that gives us additional scripting power) -->
+    <taskdef name="groovy"
+        classname="org.codehaus.groovy.ant.Groovy"
+        classpathref="external.tools.classpath"/>
+    
+  	<!-- Adding ant-contrib (tool with many extra useful ant tasks) -->
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="external.tools.classpath"/>
+    
+    <!-- Main target that drives the processing of modules, creation of the ModuleValidator project, and creation of Zip files -->
+    <target name="main">
+                
+        <!-- remove any existing version of the /generated directory and then recreate it -->
+        <delete dir="${generated.dir}" quiet="false" failonerror="true"/>
+        <if>
+            <available file="${generated.dir}" type="dir"/>
+            <then>
+                <fail>Unable to delete the /generated directory - does another program have something inside it locked?</fail>
+            </then>
+        </if>
+        <mkdir dir="${generated.dir}"/>        
+        
+        <!-- Copy ModuleValidator project to the /generated directory -->        
+        <antcall target="copy-directory">
+            <param name="source.dir" value="${module.validator.dir}"/>
+            <param name="target.dir" value="${generated.dir}/${module.validator.dir}"/>
+        </antcall>
+        
+        <!-- Iterate through all the custom module projects in the /modules directory and apply the process-module target to them -->
+		<foreach target="process-module" param="module.path" inheritall="true">
+			<path>
+			    <dirset dir="${modules.dir}">
+			         <include name="*"/>
+			    </dirset>
+			</path>
+		</foreach>
+		
+		<!-- After processing all the modules, compile and run the ModuleValidator project -->
+        <antcall target="build-project">
+            <param name="target.name" value="build-debug-and-run"/>
+            <param name="project.dir" value="${generated.dir}/${module.validator.dir}"/>
+        </antcall>
+                 
+        <!-- Iterate through the modules and package the required Mosaic pieces into Zip files -->
+   		<foreach target="create-zip-for-module" param="module.path" inheritall="true">
+			<path>
+			    <dirset dir="${modules.dir}">
+			         <include name="*"/>
+			    </dirset>
+			</path>
+		</foreach>
+		      
+    </target>
+    
+    <!-- Processes an sdk module in the /modules directory by doing the following:
+    1) Copy it into the /generated dir
+    2) Do some pre-processing
+    3) Compilation
+    4) Do some post-processing
+    -->
+    <target name="process-module">
+        <fail unless="module.path">Missing required param 'module.path'!</fail>
+    	<basename property="module.name" file="${module.path}" />
+    	
+        <!-- Start logging this validation and build -->
+        <record name="${generated.dir}/log_${module.name}.txt" action="start"/>
+        
+        <!-- Validate this module, which won't stop the build but gets logged and may be useful to the developer -->
+        <antcall target="validate-module">
+		    <param name="module.path" value="${module.path}"/>
+		</antcall>
+        
+		<!-- Compile the module project -->
+		<antcall target="build-project">
+		    <param name="target.name" value="module-build-debug-for-validator"/>
+		    <param name="project.dir" value="${modules.dir}/${module.name}"/>
+		</antcall>
+		
+	    <!-- rename jar file to sdk_[module name].jar -->
+   	    <if>
+	        <available file="${module.path}/bin/classes.jar"/>
+	        <then>
+	            <move file="${module.path}/bin/classes.jar" tofile="${module.path}/bin/sdk_${module.name}.jar" />
+	        </then>
+	        <else>
+	          <fail message="Expecting ${module.path}/bin/classes.jar but it does not exist! (Was this project marked as a library project?)"/>
+	        </else>
+      	</if>
+		
+		<!-- After compilation, copy/merge the relevant artifacts into ModuleValidator -->
+		<antcall target="merge-module">
+		    <param name="module.dir" location="${modules.dir}/${module.name}"/>
+		    <param name="module.name" value="${module.name}"/>
+		    <param name="wrapper.dir" location="${generated.dir}/${module.validator.dir}"/>
+		    <param name="wrapper.manifest" location="${generated.dir}/${module.validator.dir}/AndroidManifest.xml"/>
+		</antcall>	
+		
+		<!-- Stop logging this build -->
+        <record name="${generated.dir}/log_${module.name}.txt" action="stop"/>	
+    </target>
+    
+    <!-- Copy a source directory to the target directory -->
+    <target name="copy-directory">
+        <fail unless="source.dir">Missing required param 'source.dir'!</fail>
+        <fail unless="target.dir">Missing required param 'target.dir'!</fail>        
+     	<mkdir dir="${target.dir}"/>
+     	<copy todir="${target.dir}" >  
+     		<fileset dir="${source.dir}" includes="**"/>  
+		</copy>
+    </target>
+    
+    <!-- Call over to a project's build script to do the actual compile (this can either be a module or ModuleValidator) -->
+	<target name="build-project">
+	    <fail unless="target.name">Missing required param 'target.name'!</fail>
+	    <fail unless="project.dir">Missing required param 'project.dir'!</fail>	    
+	    <property name="build.file" location="${project.dir}/build.xml"/>
+	    <if>
+	        <available file="${build.file}"/>
+	        <then>
+	          <ant antfile="${build.file}" dir="${project.dir}" target="${target.name}"/>
+	        </then>
+	        <else>
+	          <fail message="Looking for ${build.file} but it does not exist!"/>
+	        </else>
+      	</if>
+	</target>
+	
+	<!-- After building a module, copy/merge the relevant artifacts from the target module into the wrapper project -->
+	<target name="merge-module">	    
+	    <fail unless="module.dir">Missing required param 'module.dir'!</fail>
+	    <fail unless="module.name">Missing required param 'module.name'!</fail>
+	    <fail unless="wrapper.dir">Missing required param 'wrapper.dir'!</fail>
+	    <fail unless="wrapper.manifest">Missing required param 'wrapper.manifest'!</fail>
+	    
+	    <!-- make sure we have a libs dir in the wrapper project -->
+	    <mkdir dir="${wrapper.dir}/libs"/>
+	    
+	    <copy todir="${wrapper.dir}/libs">
+    		<fileset dir="${module.dir}/bin"/>
+		</copy>
+	    		
+		<!-- copy over resources (which should all have unique names) -->
+        <antcall target="copy-directory">
+            <param name="source.dir" value="${module.dir}/res"/>
+            <param name="target.dir" value="${wrapper.dir}/res"/>
+        </antcall>
+        		
+		<!-- copy any unique library jars that this custom module uses -->
+		<if>
+            <available file="${module.dir}/libs" type="dir" />
+            <then>
+     			<copy 
+     			    todir="${wrapper.dir}/libs" 
+     			    failonerror="true">  
+     				<fileset dir="${module.dir}/libs" includes="**"/>  
+				</copy>
+			</then>
+		</if>
+		
+		<!-- copy any unique assets -->
+   	    <if>
+            <available file="${module.dir}/assets" type="dir" />
+            <then>
+		     	<mkdir dir="${wrapper.dir}/assets"/>
+     			<copy todir="${wrapper.dir}/assets" failonerror="true">  
+     				<fileset dir="${module.dir}/assets" includes="**"/>  
+				</copy>
+			</then>
+		</if>
+
+		<!-- process data from the module's manifest file -->
+		<property name="moduleDir" value="${module.dir}"/>
+		<property name="moduleName" value="${module.name}"/>
+		<property name="wrapperManifest" value="${wrapper.manifest}"/>
+		<property name="wrapperDir" value="${wrapper.dir}"/>
+	    <if>
+	        <and>
+		        <available file="${moduleDir}"/>
+		        <available file="${wrapperManifest}"/>
+		        <available file="${wrapperDir}"/>
+	        </and>
+	        <then>
+	          	<groovy>
+	          	    //namespace of AndroidManifest xml files
+	          	    androidNamespace = "http://schemas.android.com/apk/res/android";
+	          	    
+	          	    //get an xml object of the wrapper's android manifest file		   	        
+		   	        def wrapperManifestXml = new XmlParser().parse(properties.wrapperManifest);		
+		   	        
+		   	        //find the wrapper's package name
+		   	        wrapperPackageName = wrapperManifestXml.attribute("package");	
+		   	        if (!wrapperPackageName) ant.fail("Application \"package\" attribute was not defined in " + properties.wrapperManifest);
+		   	        
+		   	        //get an xml object of the module's android manifest file		   	        
+		   	        def moduleManifestXml = new XmlParser().parse(properties.moduleDir + "/AndroidManifest.xml");
+		   	        
+		   	        //define a string writers and node printers for what we're looking for
+		   	        def swPermissions = new StringWriter();
+		   	        def swActivities = new StringWriter();				   	          	        
+		   	        def permissionNodePrinter = new XmlNodePrinter(new PrintWriter(swPermissions));
+			        permissionNodePrinter.setPreserveWhitespace(true);	
+			        def activityNodePrinter = new XmlNodePrinter(new PrintWriter(swActivities));
+			        activityNodePrinter.setPreserveWhitespace(true);
+			        
+			        //initialize some variables we'll need			        
+			        mainActivityName = "";
+			        moduleName = "";
+			        moduleIcon = "";
+		   	        
+		   	        //iterate through all the children and pick out the elements that we want
+		   	        children = moduleManifestXml.iterator();
+		   	        for (child in children)
+		   	        {
+		   	        	//if we hit the application element	
+		   	        	if (child.name() == "application")
+		   	        	{		
+		   	        		//get the module's name (label)
+		   	        		groovy.xml.QName appLabel = new groovy.xml.QName(androidNamespace, "label");
+		   	        		moduleName = child.attribute(appLabel);
+		   	        		
+		   	        		//get the module's icon
+		   	        		groovy.xml.QName appIcon = new groovy.xml.QName(androidNamespace, "icon");
+		   	        		moduleIcon = child.attribute(appIcon);
+		   	        	   	        	
+		   	        		def appChildren = child.iterator();
+		   	        		for (appChild in appChildren)
+		   	        		{
+		   	        			if (appChild.name() == "activity")
+		   	        			{			   	        			
+		   	        				//look through this activity to see if it's MAIN activity so we can target it later with an intent
+		   	        				activityValue = appChild.value();   	        				
+		   	        				
+		   	        				matcher = ( activityValue =~ /android.intent.action.MAIN/ );
+		   	        				if (matcher.size() == 1)
+		   	        				{
+		   	        					groovy.xml.QName activityName = new groovy.xml.QName(androidNamespace, "name");
+		   	        					mainActivityName = appChild.attribute(activityName);
+		   	        				}		   	        				
+
+		   	        				activityNodePrinter.print(appChild);		   	        						   	        				
+		   	        			}
+		   	        		}
+		   	        	}
+		   	        	else if (child.name() == "uses-permission")
+		   	        	{
+		   	        		permissionNodePrinter.print(child);
+		   	        	}
+		   	        }
+		   	        
+		   	        //do some checks to see if we found the info we'll need to add to the sdkmodules.xml file describing this module to Modulewrapper
+		   	        if (!mainActivityName) ant.fail("No activity in " + properties.moduleManifest + " was designate as Main with the intent-filter action=android.intent.action.MAIN");		   	        
+		   	        if (!moduleName) ant.fail("Did not find a required assignment to the Application element's android:label attribute in " + properties.moduleManifest);
+		   	        if (!moduleIcon) ant.fail("Did not find a required assignment to the Application element's android:icon attribute in " + properties.moduleManifest);
+		   	        		   	        
+		   	        //create the text we'll insert into the wrapper's manifest file
+			        def activityText = swActivities.toString() + "\n&lt;!-- SDK_ACTIVITIES_END --&gt;\n";
+			        def permissionText = swPermissions.toString() + "\n&lt;!-- SDK_PERMISSIONS_END --&gt;\n";	
+			        			        
+		   	        //get the text of the Modulewrapper's AndroidManifest.xml file
+		   	        String wrapperManifest = new File(properties.wrapperManifest).text;
+		   	        if (!wrapperManifest) ant.fail(properties.wrapperManifest + " is empty or nonexistent!");
+			        
+			        //insert the activities
+		   	        activitiesPlaceholder = /&lt;!-- SDK_ACTIVITIES_END --&gt;/
+		   	        wrapperManifest = wrapperManifest.replaceAll(activitiesPlaceholder, activityText);
+		   	        
+		   	        //insert the permissions
+		   	        permissionsPlaceholder = /&lt;!-- SDK_PERMISSIONS_END --&gt;/
+		   	        wrapperManifest = wrapperManifest.replaceAll(permissionsPlaceholder, permissionText);
+		   	        
+		   	        //save the updated module wrapper manifest file
+		   	        new File(properties.wrapperManifest).write(wrapperManifest);
+		   	        
+		   	        //next, let's add this module declaration to the Modulewrapper's sdkmodules.xml file if the wrapper uses one
+		   	        //get the sdkmodules.xml for the wrapper (sometimes this isn't used, so do a check)
+		   	        
+		   	        modulesXmlFile = new File(properties.wrapperDir + "/res/raw/sdkmodules.xml");		   	        
+		   	        if (modulesXmlFile.exists())
+		   	        {
+		   	        	modulesXmlText = modulesXmlFile.text;
+		   	        	//this will be the intent the Modulewrapper uses to launch this module
+			   	        moduleIntentString = wrapperPackageName + "/" + mainActivityName;
+			   	       
+			   	        //module declaration
+			   	        modulePlaceholder = /&lt;!-- SDK_MODULES --&gt;/;
+			   	        
+			   	        //app name="[name]" icon="[icon]" sdk_module="true" intent="#Intent;[package name]/[activity];end" label="[name]"
+			   	        moduleString = "&lt;app name=\"" + moduleName + "\"";
+			   	        moduleString += " icon=\"" + moduleIcon + "\""; 
+			   	        moduleString += " sdk_module=\"true\"";
+			   	        moduleString += " intent=\"#Intent;component=" + moduleIntentString + ";end\"";
+			   	        moduleString += " label=\"" + moduleName + "\" /&gt;";
+			   	        moduleString += " \n &lt;!-- SDK_MODULES --&gt;";
+			   	        		   	        
+			   	        //find the placeholder text that we can use to insert our new module declaration
+			   	        modulePlaceholder = /&lt;!-- SDK_MODULES --&gt;/
+			   	        
+			   	        //insert the declaration
+			   	        modulesXmlText = modulesXmlText.replaceAll(modulePlaceholder, moduleString);
+			   	        
+			   	        //save the sdkmodules file
+			   	        new File(properties.wrapperDir + "/res/raw/sdkmodules.xml").write(modulesXmlText);
+			   	        
+			   	        //create an info file about this module
+			   	        infoFile = "&lt;module name=\"" + properties.moduleName + "\"";
+			   	        infoFile += " launcher=\"" + mainActivityName + "\"";
+			   	        infoFile += " /&gt;";
+			   	        
+			   	        //save the info file
+			   	        new File(properties.moduleDir + "/bin/module.info").write(infoFile);
+		   	        }
+		   	        
+			    </groovy>
+	        </then>
+	        <else>
+	          <fail message="AndroidManifest.xml file was missing in ${module.dir} or ${wrapper.dir} does not exist!"/>
+	        </else>
+      	</if>      	
+		
+	</target>
+    
+	<!-- Create a zip file of the pieces of the module that Mosaic will require:
+	1) All the resources
+	2) The generated jar file itself
+	3) Any library jars that are used
+	4) AndroidManifest.xml file
+	5) A proguard-project.txt file
+	6) Any assets that are used
+	7) A log file of the validation and build
+	8) module.info file (includes: module name, module launch activity, references)
+ 	-->
+    <target name="create-zip-for-module">
+        <fail unless="module.path">Missing required param 'module.path'!</fail>
+    	<basename property="module.name" file="${module.path}" />  
+    	
+    	<!-- Do the zip of the required files -->
+    	<zip destfile="${generated.dir}/MosaicSdk_${module.name}.zip">
+			<zipfileset dir="${module.path}/res" erroronmissingdir="false" prefix="/res" />			
+			<zipfileset dir="${module.path}/libs" erroronmissingdir="false" prefix="/libs" />
+			<zipfileset dir="${module.path}/assets" erroronmissingdir="false" prefix="/assets" />
+		    <zipfileset dir="${module.path}/." includes="AndroidManifest.xml"/>
+		    <zipfileset dir="${module.path}/." includes="proguard-project.txt"/>
+		    <zipfileset dir="${module.path}/bin" includes="sdk_${module.name}.jar" fullpath="bin/sdk_${module.name}.jar" />
+		    <zipfileset dir="${generated.dir}/." includes="log_${module.name}.txt"/>
+		    <zipfileset dir="${module.path}/bin" includes="module.info"/>
+		</zip>	
+		
+    	<!-- Remove the log file as cleanup -->
+    	<delete file="${generated.dir}/log_${module.name}.txt" quiet="false"/>
+    </target>
+    
+    
+    <!-- Validates all the modules in the /module directory -->
+    <target name="validate">
+        <!-- Iterate through all the custom module projects in the /modules directory and apply the validate-module target to them -->
+		<foreach target="validate-module" param="module.path" inheritall="true">
+		      <path>
+		          <dirset dir="${modules.dir}">
+		               <include name="*"/>
+		          </dirset>
+		      </path>
+		</foreach>
+    </target>
+    
+    <!-- Validate parts of the source and resources, and change some parts of them in preparation for compilation -->
+    <target name="validate-module">        
+        <fail unless="module.path">Missing required param 'module.path'!</fail>        
+   	    <basename property="moduleName" file="${module.path}" />
+   	    <property name="validatorName" value="${module.validator.dir}"/>
+   	    <property name="modulesDir" value="${modules.dir}"/>
+   	    
+	    <if>
+	        <and>
+		        <available file="${modulesDir}/${moduleName}"/>
+		        <available file="${validatorName}"/>
+	        </and>	        
+	        <then>
+	            <echo>Validating ${moduleName}</echo>
+	          	<groovy>	
+	          	    
+	          	    ant.echo("Examining " + properties.modulesDir + "/" + properties.moduleName + "/build.xml");
+	          	    
+	          	    buildXmlFile = properties.modulesDir + "/" + properties.moduleName + "/build.xml"; 
+	          	    if (! (new File(buildXmlFile).exists()) )
+	          	    {
+	          	    	ant.echo("[WARNING]: Could not find a build.xml file!");
+	          	    }
+	          	    
+	          	    ant.echo("Examining " + properties.modulesDir + "/" + properties.moduleName + "/AndroidManifest.xml");
+	          	    
+	          	    //do some validation of the module's AndroidManifest.xml file
+					moduleManifestFile = properties.modulesDir + "/" + properties.moduleName + "/AndroidManifest.xml";
+					
+					//namespace of AndroidManifest xml files
+	          	    androidNamespace = "http://schemas.android.com/apk/res/android";
+					
+					//get an xml object of the validator's manifest file
+		   	        validatorMinSdk = 9;
+		   	        def validatorManifestXml = new XmlParser().parse(properties.validatorName + "/AndroidManifest.xml");
+		   	        
+		   	        //find the module validator's min sdk	   	        		   	        
+		   	        children = validatorManifestXml.iterator();
+		   	        for (child in children)
+		   	        {
+		   	        	if (child.name() == "uses-sdk")
+		   	        	{
+		   	        		//get the minSdkVersion attribute
+		   	        		groovy.xml.QName minSdkAttribute = new groovy.xml.QName(androidNamespace, "minSdkVersion");
+		   	        		validatorMinSdk = child.attribute(minSdkAttribute);
+		   	        	}
+		   	        }
+		   	        
+		   	        //get an xml object of the module's android manifest file		   	        
+		   	        def moduleManifestXml = new XmlParser().parse(moduleManifestFile);
+		   	        
+		   	        //find the module's package name
+		   	        modulePackageName = moduleManifestXml.attribute("package");	
+		   	        
+	        		//iterate through all the children and pick out the elements that we want
+		   	        children = moduleManifestXml.iterator();
+		   	        for (child in children)
+		   	        {
+		   	        	//check min sdk
+   	        			if (child.name() == "uses-sdk")
+		   	        	{
+		   	        		//get the minSdkVersion attribute
+		   	        		groovy.xml.QName minSdkAttribute = new groovy.xml.QName(androidNamespace, "minSdkVersion");
+		   	        		minSdk = child.attribute(minSdkAttribute);
+		   	        		
+		   	        		if (minSdk != null &amp;&amp; validatorMinSdk != null &amp;&amp; minSdk.toInteger() > validatorMinSdk.toInteger())
+		   	        		{
+		   	        			ant.echo("[WARNING]: The minSdkVersion attribute (" + minSdk + ") in the module's AndroidManifest.xml is higher than Mosaic's (" + validatorMinSdk + ")");
+		   	        		}
+		   	        	}
+		   	        }
+		   	        
+		   	        //get the text of module's AndroidManifest.xml
+		   	        String moduleManifestText = new File(moduleManifestFile).text;
+		   	        
+		   	        //create a regex to match the intent-filter android.intent.action.MAIN
+		   	        regexMAIN = /android\.intent\.action\.MAIN/;
+		   	        
+		   	        //make sure there is exactly 1 use of the android.intent.action.MAIN intent-filter				    	
+			    	matcher = ( moduleManifestText =~ regexMAIN );	
+			    	if (matcher.size() == 0)
+			    	{
+			    		ant.echo("[WARNING]: There is no activity defined with the &lt;action android:name=\"android.intent.action.MAIN\" /&gt; intent filter (there should be 1)");
+			    	} 
+			    	
+			    	if (matcher.size() > 1)
+			    	{
+			    		ant.echo("[WARNING]: There are multiple activities defined with the &lt;action android:name=\"android.intent.action.MAIN\" /&gt; intent filter (there should be 1)");
+			    	}
+			    	
+			    	//create a regex to match the intent-filter android.intent.category.LAUNCHER
+		   	        regexLAUNCHER = /android\.intent\.category\.LAUNCHER/;
+		   	        
+		   	        //make sure there are no instances of the android.intent.category.LAUNCHER intent-filter				    	
+			    	matcher = ( moduleManifestText =~ regexLAUNCHER );	
+			    	if (matcher.size() > 0)
+			    	{
+			    		ant.echo("[WARNING]: There is an intent-filter element &lt;action android:name=\"android.intent.category.LAUNCHER\" /&gt; in the main activity");
+			    	} 			    	
+			    	 
+			    			   	        
+          		   	//create a regex to match unqualified activity names starting with a dot				   	        
+		   	        //match like: &lt;activity android:name=".MainActivity" with all whitespace possibilities
+		   	        //Explanation of this regex:
+					//(?s): match multiline input
+					//&lt;\s*?activity(?s).*?android:name\s*?=\s*?"\s*?: match, with whitespace, an activity declaration and find the android:name attribute
+					//(\.)(?s)(.*?)": match a dot right after a quote, then the name (indicating an unqualified activity name), end with a quote					
+		   	        regexUnqualifiedNames = /(?s)(&lt;\s*?activity(?s).*?android:name\s*?=\s*?"\s*?)(\.)(?s)(.*?)"/
+		   	        		   	        
+		   	        matcher = ( moduleManifestText =~ regexUnqualifiedNames );			   	        
+		   	        for (unqualifiedMatch in matcher)
+   	        		{
+						ant.echo("[WARNING]: The activity " + unqualifiedMatch[3] + " appears to be unqualified. It should have the package name prepending it, like " + modulePackageName + "." + unqualifiedMatch[3]);		   	        			
+   	        		}		   	        
+		   	        
+	          	    //validate the project.properties file
+	          	    moduleProperties = properties.modulesDir + "/" + properties.moduleName + "/project.properties";
+	          	    ant.echo("Examining " + moduleProperties);
+	          	    
+	          	    //confirm a project.properties file exists
+	          	    modulePropertiesFile = new File(moduleProperties);
+	          	    if (modulePropertiesFile == null || !modulePropertiesFile.exists())
+	          	    {
+	          	    	ant.fail("A project.properties file is required.");
+	          	    }
+	          	    
+	   	        	String modulePropertiesText = modulePropertiesFile.text;
+	   	        	
+	   	        	//confirm that this is set to be a library project
+		   	        regexLibrary = /android.library\s*?=\s*?true/;
+		   	        
+		   	        matcher = ( modulePropertiesText =~ regexLibrary );
+		   	        if (matcher.size() != 1)	
+		   	        {
+		   	        	ant.echo("[WARNING]: Project does not appear to be a library project, which is required when making the final builds (android.library=true not found)");
+		   	        } 	
+		   	        
+		   	        ant.echo("Examining source code (/src)");
+		   	        
+		   	        //create a regex to match any source code that extends Application
+		   	        regexExtendsApplication = /\sextends\s+?Application\s/;
+		   	        
+        		   	//create a regex to match MRL resource loading calls that do NOT have the module name prepended				   	        
+		   	        //match like: Mosaic.getResId( mContext, Mosaic.STRING_RESOURCE, "moduletests_app_name" ) ); with all whitespace possibilities
+		   	        //Explanation of this regex:
+		   	        //(?s): match multiline input
+		   	        //(\sMosaic\s*?\.\s*?getResId): match a whitespace, then "Mosaic", then whitespace, then a dot, then whitespace, then "getResId"
+		   	        //(?s)(.*?)": match anything, including whitespace, until a quote
+		   	        //(.+?)": match the name of the resource preceded by the quote, ending with a quote
+		   	        regexMRLResRef = /(?s)(Mosaic\s*?\.\s*?getResId)(?s)(.*?)"(.+?)"/;
+		   	        
+ 	        		//create a regex to find any old, incorrect ways of referencing resources, i.e. R.[resource type].[resource name]
+		   	        //Explanation of this regex:
+		   	        //(?s): match multiline input
+		   	        //\sR\s*?\.: match a whitespace, then "R", then whitespace, then a dot
+		   	        //\s*?[a-zA-Z]+?\s*\.: match whitespace, then a resource type (can only be letters), then whitespace, then a dot
+		   	        //\s*?[a-zA-Z\d_]+: match whitespace, then a resource name (can be letters, numbers, and underscore)				   	        
+   	        		regexOldResRef = /(?s)(R\s*?\.\s*?[a-zA-Z]+?\s*\.\s*?[a-zA-Z\d_]+)/;
+		   	        
+		   	        //go through the source code to see if there are any issues  
+		   	        def srcDir = new File(properties.modulesDir + "/" + properties.moduleName + "/src");		   	        
+					srcDir.traverse 
+					{
+					    if (it.isFile()) 
+					    {
+					        //get the path of the file
+					    	path = it.canonicalPath;
+					    						    	
+					    	//get the source text of the file
+					    	String srcText = new File(path).text;
+					    						    	
+					    	//check that there aren't any standard (i.e. wrong) ways of referencing resources, i.e. R.[resource type].[resource name]
+				   	        matcher = ( srcText =~ regexOldResRef );
+				   	        for (resMatch in matcher)
+		   	        		{
+								ant.echo("[WARNING]: " + it.getPath() +" appears to have an incorrect resource reference: " + resMatch[1] );		   	        			
+		   	        		}
+					    	
+					    	//make sure the source file doesn't extend Application as this doesn't make sense					    	
+					    	matcher = ( srcText =~ regexExtendsApplication );	
+					    	if ( matcher.size() != 0) 
+				   	        {
+				   	        	ant.echo("[WARNING]: " + it.getPath() + " extends Application; it will never be initialized and the logic in this class should be moved elsewhere.");				   	        	
+				   	        }
+				   	        
+				   	        //see if Mosaic.getResId has correct parameters (i.e. that the module name is prefixed)
+				   	        matcher = ( srcText =~ regexMRLResRef );
+				   	        for (resMatch in matcher)
+		   	        		{
+		   	        			//get the name of the resource parameter
+								resName = resMatch[3];
+								
+								//lets do this check without considering case
+								resName = resName.toLowerCase();
+								
+								//check if the resource name contains the module name in the correct format (i.e. [module_name]_[resource_name])
+								resPrefix = properties.moduleName.toLowerCase() + "_";								
+																
+								if ((resName =~ /${resPrefix}/).size() == 0)
+								{	
+									ant.echo("[WARNING]: " + it.getPath() + "'s \"" + resName + "\" resource parameter does not appear to have the module's name prepended to it (like \"" + resPrefix + resName + "\")");
+								}	   	        			
+		   	        		}
+					    }
+					}
+					
+					ant.echo("Examining resources (/res)");
+					
+					//check that resource file names are [module name]_[resource file name] and that the resource names themselves are [module name]_[resource name]
+					//we're doing this to avoid file name conflicts when copying these over to the ModuleValidator project
+					resDirectory = properties.modulesDir + "/" + properties.moduleName + "/res";
+					new File( resDirectory ).eachDirRecurse() 
+					{ 
+						dir -> dir.eachFile() 
+						{ 
+							file ->
+							prefix = properties.moduleName.toLowerCase() + "_";
+							//check this file doesn't already have the module name prefix, if not prepend it
+							if ( (file.name =~ /${prefix}.+?/).size() == 0)
+							{
+							 	ant.echo("[WARNING]: " + file.getPath() + " appears not to have the module name prepended to its file name; it should be named " + prefix+file.name);
+						  	}
+						  	
+						  	//check that the names in the resource files themselves have prefixes
+						  	
+						  	//ignore any files that aren't .xml
+						  	if (file.name.endsWith('.xml'))
+						  	{
+						  		//get the xml of the file we're interested in		   	        
+					   	        def fileXml = new XmlParser().parse(file.path);
+					   	        
+					   	        //we'll look at xml that has a "resources" element as the top level for things like strings, colors, and styles
+					   	        if (fileXml.name() == "resources")
+					   	        {	
+					   	     		//iterate through all the children and pick out the elements that we want
+						   	        children = fileXml.iterator();
+						   	        for (child in children)
+						   	        {
+					   	        		//find the name attribute
+					   	        		if (child.attributes().containsKey("name"))
+					   	        		{
+					   	        			resourceName = child.attributes().get("name");
+					   	        			
+					   	        			//does the name have the module name prefix?
+					   	        			if ( (resourceName =~ /${prefix}.+?/).size() == 0)
+					   	        			{
+					   	        				ant.echo("[WARNING]: " + resourceName + " in " + file.getPath() + " appears not to have the module name prepended to its name; it should be named " + prefix+resourceName);
+					   	        			}
+					   	        		}
+						   	        }					   	     		
+					   	        }	
+					   	        else
+					   	        {
+					   	        	//get the text of the xml file
+		   	        				String xmlText = file.text;
+		   	        						   	        
+		   	        				//search the xml file for instances of [android:id="@+id/]
+						   	        //Explanation of this regex:
+						   	        //(?s): match multiline input
+						   	        //android:id\s*?=\s*?: match android:id, then whitespace, then equals sign, then whitespace
+						   	        //"@\+id\/: : match "@+id/
+						   	        //(.*?): match the name of the android:id
+						   	        //(\s*?)": match whitespace, then end quote			   	        
+				   	        		regexAndroidId = /(?s)(android:id\s*?=\s*?"@\+id\/)(.*?)(\s*?)"/;				   	        		
+				   	        		
+				   	        		matcher = ( xmlText =~ regexAndroidId );
+						   	        for (idMatch in matcher)
+				   	        		{
+				   	        			androidId = idMatch[2];
+				   	        			
+				   	        			//we want to skip the android:id if it matches an android sdk id (e.g. "android:list")
+				   	        			if ( (androidId =~ /android:.*?/).size() == 0)
+				   	        			{
+				   	        				//now check if the id does not have the module name prefixed and warn if so
+				   	        				if ( (androidId =~ /${prefix}.+?/).size() == 0)
+					   	        			{
+					   	        				ant.echo("[WARNING]: " + androidId + " in " + file.getPath() + " appears not to have the module name prepended to its name; it should be named " + prefix+androidId);
+					   	        			}
+				   	        			}	        
+								  	}
+					   	        }
+							}
+					    }  
+					}
+	   	        </groovy>
+   	        </then>
+		   	<else>
+	          <fail message="Could not find ${modulesDir}/${moduleName} and/or ${validatorDir}"/>
+	        </else>
+	    </if>
+    </target>    
+    
+</project>

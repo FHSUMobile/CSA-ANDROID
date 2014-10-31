@@ -1,0 +1,57 @@
+# view AndroidManifest.xml #generated:67
+-keep class com.FHSUMobile.csa.csa_BankingActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:95
+-keep class com.FHSUMobile.csa.csa_ChinaGarden { <init>(...); }
+
+# view AndroidManifest.xml #generated:75
+-keep class com.FHSUMobile.csa.csa_ChinesefoodExpress { <init>(...); }
+
+# view AndroidManifest.xml #generated:51
+-keep class com.FHSUMobile.csa.csa_CommunicationActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:47
+-keep class com.FHSUMobile.csa.csa_DiningActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:99
+-keep class com.FHSUMobile.csa.csa_DisplayTxtActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:59
+-keep class com.FHSUMobile.csa.csa_FindingAJobActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:79
+-keep class com.FHSUMobile.csa.csa_Gellas { <init>(...); }
+
+# view AndroidManifest.xml #generated:83
+-keep class com.FHSUMobile.csa.csa_Gutchs { <init>(...); }
+
+# view AndroidManifest.xml #generated:87
+-keep class com.FHSUMobile.csa.csa_Neighbars { <init>(...); }
+
+# view AndroidManifest.xml #generated:63
+-keep class com.FHSUMobile.csa.csa_ProtectingYourselfActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:103
+-keep class com.FHSUMobile.csa.csa_RestaurantInfoActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:91
+-keep class com.FHSUMobile.csa.csa_TacoShop { <init>(...); }
+
+# view AndroidManifest.xml #generated:55
+-keep class com.FHSUMobile.csa.csa_TransportationActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:71
+-keep class com.FHSUMobile.csa.csa_VisaInformationActivity { <init>(...); }
+
+# view AndroidManifest.xml #generated:38
+-keep class com.FHSUMobile.csa.csa_main_menu { <init>(...); }
+
+# view res/layout/csa_activity_restaurant_info.xml #generated:45
+-keep class com.google.android.gms.maps.MapFragment { <init>(...); }
+
+# onClick res/layout/csa_activity_restaurant_info.xml #generated:12
+-keepclassmembers class * { *** callRestaurant(...); }
+
+# onClick res/layout/csa_activity_restaurant_info.xml #generated:24
+-keepclassmembers class * { *** getDirections(...); }
+

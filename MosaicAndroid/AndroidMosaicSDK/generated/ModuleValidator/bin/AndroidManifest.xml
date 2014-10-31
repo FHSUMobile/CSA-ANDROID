@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.blackboard.android.ModuleValidator"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="9"
+        android:targetSdkVersion="17" />
+        
+    <!-- SDK_PERMISSIONS_BEGIN -->    
+    <uses-permission android:name="android.permission.INTERNET" xmlns:android="http://schemas.android.com/apk/res/android"/>
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" xmlns:android="http://schemas.android.com/apk/res/android"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" xmlns:android="http://schemas.android.com/apk/res/android"/>
+<uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" xmlns:android="http://schemas.android.com/apk/res/android"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" xmlns:android="http://schemas.android.com/apk/res/android"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" xmlns:android="http://schemas.android.com/apk/res/android"/>
+
+<!-- SDK_PERMISSIONS_END -->
+
+
+    <application 
+        android:allowBackup="false"
+        android:icon="@drawable/launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Sherlock.Light" >
+        
+        <!-- Launcher Activity -->
+        <activity android:name="com.blackboard.android.ModuleValidator.ModuleListActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+                
+        <!-- SDK_ACTIVITIES_BEGIN -->        
+        <activity android:name="com.FHSUMobile.csa.csa_main_menu" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_app_name">
+  <intent-filter>
+    <action android:name="android.intent.action.MAIN"/>
+  </intent-filter>
+</activity>
+<activity android:name="com.FHSUMobile.csa.csa_DiningActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_dining"/>
+<activity android:name="com.FHSUMobile.csa.csa_CommunicationActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_communication"/>
+<activity android:name="com.FHSUMobile.csa.csa_TransportationActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_transportation"/>
+<activity android:name="com.FHSUMobile.csa.csa_FindingAJobActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_finding_ajob"/>
+<activity android:name="com.FHSUMobile.csa.csa_ProtectingYourselfActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_protecting_yourself"/>
+<activity android:name="com.FHSUMobile.csa.csa_BankingActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_banking"/>
+<activity android:name="com.FHSUMobile.csa.csa_VisaInformationActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_visa_information"/>
+<activity android:name="com.FHSUMobile.csa.csa_ChinesefoodExpress" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_chinesefood_express"/>
+<activity android:name="com.FHSUMobile.csa.csa_Gellas" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_gellas"/>
+<activity android:name="com.FHSUMobile.csa.csa_Gutchs" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_gutchs"/>
+<activity android:name="com.FHSUMobile.csa.csa_Neighbars" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_neighbars"/>
+<activity android:name="com.FHSUMobile.csa.csa_TacoShop" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_taco_shop"/>
+<activity android:name="com.FHSUMobile.csa.csa_ChinaGarden" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_china_garden"/>
+<activity android:name="com.FHSUMobile.csa.csa_DisplayTxtActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_display_txt"/>
+<activity android:name="com.FHSUMobile.csa.csa_RestaurantInfoActivity" xmlns:android="http://schemas.android.com/apk/res/android" android:label="@string/csa_title_activity_restaurant_info"/>
+
+<!-- SDK_ACTIVITIES_END -->
+        
+
+    </application>
+
+</manifest>

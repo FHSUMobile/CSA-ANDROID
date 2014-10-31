@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+(C) Copyright Blackboard Inc. 1998-2013 - All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software without prior explicit written approval is strictly
+prohibited.
+
+BLACKBOARD MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
+NON-INFRINGEMENT. BLACKBOARD SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING
+OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
+-->
+
+<project name="mosaic-custom-module" default="module-build-debug">
+
+    <!-- The local.properties file is created and updated by the 'android' tool.
+         It contains the path to the SDK. It should *NOT* be checked into
+         Version Control Systems. -->
+    <property file="local.properties" />
+
+    <!-- The ant.properties file can be created by you. It is only edited by the
+         'android' tool to add properties to it.
+         This is the place to change some Ant specific build properties.
+         Here are some properties you may want to change/update:
+
+         source.dir
+             The name of the source directory. Default is 'src'.
+         out.dir
+             The name of the output directory. Default is 'bin'.
+
+         For other overridable properties, look at the beginning of the rules
+         files in the SDK, at tools/ant/build.xml
+
+         Properties related to the SDK location or the project target should
+         be updated using the 'android' tool with the 'update' action.
+
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems.
+
+         -->
+    <property file="ant.properties" />
+
+    <!-- The project.properties file is created and updated by the 'android'
+         tool, as well as ADT.
+
+         This contains project specific properties such as project target, and library
+         dependencies. Lower level build properties are stored in ant.properties
+         (or in .classpath for Eclipse projects).
+
+         This file is an integral part of the build system for your
+         application and should be checked into Version Control Systems. -->
+    <loadproperties srcFile="project.properties" />
+
+
+
+    <!--
+        Import per project custom build rules if present at the root of the project.
+        This is the place to put custom intermediary targets such as:
+            -pre-builddefault.properties
+            -pre-compile
+            -post-compile (This is typically used for code obfuscation.
+                           Compiled code location: ${out.classes.absolute.dir}
+                           If this is not done in place, override ${out.dex.input.absolute.dir})
+            -post-package
+            -post-build
+            -pre-clean
+    -->
+    <import file="custom_rules.xml" optional="true" />
+    
+    
+    <!-- Mosaic SDK specific code -->
+	<property environment='env'/>
+	<property name='sdk.dir' value='${env.SDK_DIR}'/>
+	
+	<!-- quick check on sdk.dir -->
+	<fail
+	        message="Missing environment var SDK_DIR - set it to the path to your Android SDK"
+	        unless="sdk.dir"
+	/>
+  
+  <!-- Import the actual build.xml file from the Android SDK Tools -->
+  <import file="${sdk.dir}/tools/ant/build.xml" />
+  
+  <target name="module-build-debug" depends="clean, debug"/>
+  
+  <target name="module-build-debug-for-validator" depends="module-build-debug"/>
+  
+  <target name="module-build-release" depends="clean, release"/>
+  
+  <target name="module-build-release-for-validator" depends="module-build-release"/>
+
+  <target name="copy_debug_to_build_dir">
+    <antcall target="copy_build">
+      <param name="filename" value="stanford-debug.apk"/>
+    </antcall>
+  </target>
+
+  <target name="copy_release_to_build_dir">
+    <antcall target="copy_build">
+      <param name="filename" value="stanford-release.apk"/>
+    </antcall>
+    <antcall target="copy_proguard_mapping" />
+  </target>
+
+  <target name="copy_build">
+    <fail unless="filename">Missing required param 'filename'!</fail>
+    <copy file="bin/${filename}"
+          tofile="${apk.dir}/${filename}"/>
+  </target>
+  
+
+</project>

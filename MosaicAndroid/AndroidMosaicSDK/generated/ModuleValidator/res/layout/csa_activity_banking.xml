@@ -1,0 +1,21 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/csa_activity_vertical_margin"
+    android:paddingLeft="@dimen/csa_activity_horizontal_margin"
+    android:paddingRight="@dimen/csa_activity_horizontal_margin"
+    android:paddingTop="@dimen/csa_activity_vertical_margin"
+    tools:context=".BankingActivity" >
+
+    <ListView
+        android:id="@+id/csa_bankingListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:entries="@array/csa_banking_menu" >
+
+    </ListView>
+
+</RelativeLayout>

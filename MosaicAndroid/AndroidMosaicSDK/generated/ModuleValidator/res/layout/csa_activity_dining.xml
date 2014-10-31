@@ -1,0 +1,67 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/csa_activity_vertical_margin"
+    android:paddingLeft="@dimen/csa_activity_horizontal_margin"
+    android:paddingRight="@dimen/csa_activity_horizontal_margin"
+    android:paddingTop="@dimen/csa_activity_vertical_margin"
+    tools:context=".DiningActivity" >
+
+    <LinearLayout
+        android:id="@+id/csa_linearLayout2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="24dp"
+        android:orientation="vertical" >
+
+        <ListView
+            android:id="@+id/csa_onCampusListView"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:entries="@array/csa_on_campus_locations" >
+        </ListView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/csa_linearLayout1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="26dp"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/csa_offCampusListView"
+        android:layout_width="match_parent"
+        android:layout_height="157dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/csa_textView2"
+        android:entries="@array/csa_off_campus_locations" >
+
+    </ListView>
+
+    <TextView
+        android:id="@+id/csa_textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/csa_mcMindesInfoTextView"
+        android:layout_below="@+id/csa_linearLayout2"
+        android:text="@string/csa_Off_Campus"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/csa_mcMindesInfoTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/csa_On_Campus"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</RelativeLayout>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.blackboard.android.ModuleValidator"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="9"
+        android:targetSdkVersion="17" />
+        
+    <!-- SDK_PERMISSIONS_BEGIN -->    
+    <!-- SDK_PERMISSIONS_END -->
+
+    <application 
+        android:allowBackup="false"
+        android:icon="@drawable/launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Sherlock.Light" >
+        
+        <!-- Launcher Activity -->
+        <activity android:name="com.blackboard.android.ModuleValidator.ModuleListActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+                
+        <!-- SDK_ACTIVITIES_BEGIN -->        
+        <!-- SDK_ACTIVITIES_END -->        
+
+    </application>
+
+</manifest>

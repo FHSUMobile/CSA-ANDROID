@@ -1,0 +1,4 @@
+<modules>
+  <app name="@string/csa_app_name" icon="@drawable/csa_ic_launcher" sdk_module="true" intent="#Intent;component=com.blackboard.android.ModuleValidator/com.FHSUMobile.csa.csa_main_menu;end" label="@string/csa_app_name" /> 
+ <!-- SDK_MODULES -->
+</modules>

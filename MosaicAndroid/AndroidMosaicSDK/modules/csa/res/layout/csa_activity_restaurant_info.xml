@@ -1,0 +1,53 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="top"
+    android:paddingBottom="@dimen/csa_activity_vertical_margin"
+    android:paddingLeft="@dimen/csa_activity_horizontal_margin"
+    android:paddingRight="@dimen/csa_activity_horizontal_margin"
+    android:paddingTop="@dimen/csa_activity_vertical_margin"
+    tools:context=".RestaurantInfoActivity" >
+
+    <Button
+        android:id="@+id/csa_phoneNumberButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="27dp"
+        android:layout_marginTop="23dp"
+        android:text="Phone #" 
+        android:clickable="true"
+        android:onClick="callRestaurant"/>
+
+    <Button
+        android:id="@+id/csa_directionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/csa_phoneNumberButton"
+        android:layout_below="@+id/csa_phoneNumberButton"
+        android:text="Directions" 
+        android:clickable="true"
+        android:onClick="getDirections"/>
+
+    <TextView
+        android:id="@+id/csa_restaurantTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="22dp"
+        android:layout_marginTop="23dp"
+        android:text="Info"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+    
+    <fragment
+        android:id="@+id/csa_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/csa_directionButton"
+        class="com.google.android.gms.maps.MapFragment" />
+
+</RelativeLayout>
